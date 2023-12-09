@@ -30,9 +30,13 @@ After simplifying the expressions of the activation functions such that we use a
 As shown in the above table, some functions don't use several stages. The data from the previous stage just passes through such stages without any change. For example, in the *LReLu* function the input just passes through the first five stages and only the comparison stage is used.
 >
 ### Design 
-
+>
+The figure shown below is the overall pipelined module.
+>
 ![Pipline Stages ](kanth.png)
-
+>
+*x* represents the given input. Here OP represents the function (which is also given as an input along with x), which enables the pipeline stages based on the function used. *Res_exp*, *Res_add*, *Res_sub*,*Res_div* are the results of the exponential, addition, subtraction and division stages respectively.
+>
 
 ## TO RUN 
-use the comand make 
+use the comand make
