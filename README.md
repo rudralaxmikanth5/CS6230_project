@@ -22,6 +22,8 @@ These functions are evaluated using several pipelining stages, each stage suppor
 > 
 ![](SeLu.png)
 ## Design 
+After simplifying the expressions of the activation functions such that we will use minimum number of pipeline stages, we need **6** stages.
+![]()
 
 ![Pipline Stages ](kanth.png)
 
