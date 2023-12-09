@@ -14,16 +14,22 @@ These functions are evaluated using several pipelining stages, each stage suppor
 ![](sigmoid(x).png)
 
 #### 3) leaky_ReLu(x) 
-> LReLu(x) uses a stage to compare value of x with 0. Here α is the learning rate, and after referring to sources from internet we took its value as 1.67.
+> LReLu(x) uses a stage to compare value of x with 0. Here α is the learning rate, and after referring to sources from the internet we took its value as 1.67.
 >
 ![](LReLu.png)
 #### 4) SeLu(x)
 > Just like LReLu(x), SeLu(x) also uses a stage to compare value of x with 0. Here λ is the scale, and its value is taken as 1.05.
 > 
 ![](SeLu.png)
-## Design 
-After simplifying the expressions of the activation functions such that we will use minimum number of pipeline stages, we need **6** stages.
-![]()
+### Pipeline stages  
+>  
+After simplifying the expressions of the activation functions such that we use a minimum number of pipeline stages, we got **6** stages. We made the order of the stages such that we can reuse the previous stages' output as input for the upcoming stages. For example, in the tanh(x) function value of e^2x which is evaluated in the second stage is given as inputs to the addition and subtraction stages.
+>   
+![](stages.png)
+>
+As shown in the above table, some functions don't use several stages. The data from the previous stage just passes through such stages without any change. For example, in the *LReLu* function the input just passes through the first five stages and only the comparison stage is used.
+>
+### Design 
 
 ![Pipline Stages ](kanth.png)
 
