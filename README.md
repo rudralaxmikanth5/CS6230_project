@@ -4,4 +4,10 @@ To design an area efficient pipelined module to support unary operators ( activa
 u(x) :- tanh(x), sigmoid(x), leaky_ReLu(x), SeLu(x)
 
 
+## Design 
+
 ![Pipline Stages ](kanth.png)
+
+
+## TO RUN 
+use the comand make 
