@@ -125,10 +125,27 @@ Factorization is performed based on the rules and opcode:
    * sub1_valid to sub4_valid: Flags indicating the stages of the subtraction operation.
 4. Rules for Factorization:
    * tanh(x), SeLu(x): Undergoes subtraction operation
-   * sigmoid(x) or SeLu(x): Leaves the input value unchanged (add_res <= input_x);
+   * sigmoid(x) or LReLu(x): Leaves the input value unchanged (add_res <= input_x);
 
 
 #### STAGE 5 - Div
+1. opcode :
+   * 00, 01: Invoke the division operation using the mk_div_op module. Otherwise, directly passes through the input value without division.
+2. Interface Methods:
+   * The module implements the methods specified in the Ifc_div_s5 interface
+   * method Action get(Bit#(2) op, Float x, Float z): Takes an opcode and two floating-point numbers as input for either division or pass-through operation.
+   * method Float div_result: Returns the result of the division operation.
+   * method Action pass_in(Float x, Float sub_r): Takes two floating-point numbers to be passed through the pipeline.
+   * method Float pass_out: Returns the value stored in the register.
+   * method Float sub_res_out: Returns the result of the subtraction operation.
+3. Registers and Data Flow:
+   * Registers (input_x, div_res, sub_pass) manage the flow of data between different stages.
+   * input_valid_div: Flag indicating whether a valid input for division is present.
+   * div1_valid and div2_valid: Flags indicating the stages of the division operation.
+4. Rules for Factorization:
+   * tanh(x), sigmoid(x): Undergoes division operation
+   * LReLu(x) or SeLu(x): Leaves the input value unchanged (div_res <= input_x);
+
 
 #### STAGE 6 - Comp
 
