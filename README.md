@@ -145,7 +145,7 @@ Factorization is performed based on the rules and opcode:
    * tanh(x), sigmoid(x): Undergoes division operation
    * LReLu(x) or SeLu(x): Leaves the input value unchanged (div_res <= input_x);
 
-#### STAGE 6 - Comp
+### STAGE 6 - Comp
 1. opcode :
    * 10, 11: Invoke the division operation using the mk_comp_s6 module. Otherwise, directly passes through the input value without division.
 2. Interface Methods:
@@ -161,7 +161,9 @@ Factorization is performed based on the rules and opcode:
    * tanh(x), sigmoid(x): Leaves the input value unchanged (div_res <= input_x);
 ### Overall Latency and Optimisation
 
-### Results 
+### Test cases & Results 
+
+
 
 ### Synthesis 
 
