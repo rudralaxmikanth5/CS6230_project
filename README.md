@@ -56,11 +56,11 @@ FloatingPoint library in Bluespec and Shakti's Fbox were used as a reference for
 
 #### STAGE 6 - Comp
 
-#### Overall Latency and Optimisation
+### Overall Latency and Optimisation
 
-#### Results 
+### Results 
 
-#### Synthesis 
+### Synthesis 
 
 ### TO RUN 
 use the comand make
