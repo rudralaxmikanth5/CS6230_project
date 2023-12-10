@@ -68,13 +68,13 @@ Factorization is performed based on the rules and opcode:
 3. Registers and Data Flow:
    * The module uses registers (input_x, factor_res, in, opcode, input_valid_factor) to manage the data flow and store intermediate results.
    * The input_valid_factor flag indicates whether valid input is present.
-4. Rules for Factorization:
+4. Rules:
    * The module defines three rules, each corresponding to a different factorization operation based on the opcode:
    * tanh(x): Doubles the input value (factor_res <= 2 * input_x)
    * sigmoid(x): Negates the input value (factor_res <= -1 * input_x)
    * LReLu(x) or SeLu(x): Leaves the input value unchanged (factor_res <= 1 * input_x).
 >
-#### STAGE 2 - Exp
+### STAGE 2 - Exp
 1. opcode :
    * 00, 01, or 11: Invoke the exponentiation operation using the mkExp module. Otherwise, directly passes through the input value without exponentiation.
 2. Interface Methods:
@@ -90,11 +90,11 @@ Factorization is performed based on the rules and opcode:
 3. Registers and Data Flow:
    * Registers and wires (x_wire, stage0_x, stage1_x, etc.) manage the flow of data between different stages.
    * en_stage1 is a PulseWire used to trigger the initiation of the exponentiation process.
-4. Rules for Factorization:
+4. Rules:
    * tanh(x), sigmoid(x) and SeLu(x): Calculates the exponential value
    * SeLu(x): Leaves the input value unchanged (exp_res <= input_x;)
 
-#### STAGE 3 - Add
+### STAGE 3 - Add
 1. opcode :
    * 00, 01: Invoke the addition operation using the mk_add module. Otherwise, directly passes through the input value without addition.
 2. Interface Methods:
@@ -106,11 +106,11 @@ Factorization is performed based on the rules and opcode:
    * method Float exp_res_out: Returns the value stored in the exp_pass register.
 3. Registers and Data Flow:
    * Registers (input_x, add_res, exp_pass) manage the flow of data between different stages.
-4. Rules for Factorization:
+4. Rules:
    * tanh(x), sigmoid(x): Undergoes addition operation
    * LReLu(x) or SeLu(x): Leaves the input value unchanged (add_res <= input_x);
 
-#### STAGE 4 - Sub
+### STAGE 4 - Sub
 1. opcode :
    * 00, 11: Invoke the subtraction operation using the mk_sub module. Otherwise, directly passes through the input value without subtraction.
 2. Interface Methods:
@@ -123,12 +123,11 @@ Factorization is performed based on the rules and opcode:
 3. Registers and Data Flow:
    * Registers (input_x, sub_res, add_pass) manage the flow of data between different stages.
    * sub1_valid to sub4_valid: Flags indicating the stages of the subtraction operation.
-4. Rules for Factorization:
+4. Rules:
    * tanh(x), SeLu(x): Undergoes subtraction operation
    * sigmoid(x) or LReLu(x): Leaves the input value unchanged (add_res <= input_x);
 
-
-#### STAGE 5 - Div
+### STAGE 5 - Div
 1. opcode :
    * 00, 01: Invoke the division operation using the mk_div_op module. Otherwise, directly passes through the input value without division.
 2. Interface Methods:
@@ -142,13 +141,24 @@ Factorization is performed based on the rules and opcode:
    * Registers (input_x, div_res, sub_pass) manage the flow of data between different stages.
    * input_valid_div: Flag indicating whether a valid input for division is present.
    * div1_valid and div2_valid: Flags indicating the stages of the division operation.
-4. Rules for Factorization:
+4. Rules:
    * tanh(x), sigmoid(x): Undergoes division operation
    * LReLu(x) or SeLu(x): Leaves the input value unchanged (div_res <= input_x);
 
-
 #### STAGE 6 - Comp
-
+1. opcode :
+   * 10, 11: Invoke the division operation using the mk_comp_s6 module. Otherwise, directly passes through the input value without division.
+2. Interface Methods:
+   * The module implements the methods specified in the Ifc_comp_s6 interface
+   * method Action get(Bit#(2) op, Float v, Float x, Float z): Takes an opcode and three floating-point numbers (v, x, and z) .
+   * method Float comp_result: Returns the result of the division operation.
+3. Registers and Data Flow:
+   * Registers (input_x, div_Res, sub_Res, comp_res) manage the flow of data between different stages.
+   * input_valid_comp: Flag indicating whether a valid input for computation is present.
+   * λ, and α are constant values stored in registers.
+4. Rules:
+   * LReLu(x) or SeLu(x): Undergoes division operation.
+   * tanh(x), sigmoid(x): Leaves the input value unchanged (div_res <= input_x);
 ### Overall Latency and Optimisation
 
 ### Results 
