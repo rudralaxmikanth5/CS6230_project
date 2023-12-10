@@ -171,27 +171,26 @@ module mkTb();
     rule stage;
         cycle <= cycle + 1;
     endrule 
-    
     rule input1 (cycle = 0);
         ifc_main.get(2'b10, -5.3);
     endrule
     rule input2 (cycle == 1);
         ifc_main.get(2'b10, 3.7);
     endrule
-	rule input3 (cycle == 2);
-	    ifc_main.get(2'b10, 11.2);
+    rule input3 (cycle == 2);
+        ifc_main.get(2'b10, 11.2);
     endrule
-	rule input4 (cycle == 3);
-	    ifc_main.get(2'b10, 0.2);
+    rule input4 (cycle == 3);
+        ifc_main.get(2'b10, 0.2);
     endrule
-	rule input5 (cycle == 4);
-	    ifc_main.get(2'b10, 0);
+    rule input5 (cycle == 4);
+        ifc_main.get(2'b10, 0);
     endrule
 
-  rule result;
-		  let r = ifc_main.main_result;
-		  $display("Result = %b : cycle =%d", r, cycle;
-	endrule
+    rule result;
+        let r = ifc_main.main_result;
+        $display("Result = %b : cycle =%d", r, cycle;
+    endrule
 
   rule finish(cycle == 30);
         $finish(0);
@@ -218,27 +217,26 @@ module mkTb();
     rule stage;
         cycle <= cycle + 1;
     endrule 
-
     rule get_input1(cycle == 0);
-        ifc_main.get(2'b11, 12.5);
+         ifc_main.get(2'b11, 12.5);
     endrule
     rule get_input2(cycle == 1);
-        ifc_main.get(2'b11, 2.8);
+         ifc_main.get(2'b11, 2.8);
     endrule
-	rule get_input3(cycle == 2);
-	    ifc_main.get(2'b11, 0);
+    rule get_input3(cycle == 2);
+	 ifc_main.get(2'b11, 0);
     endrule
-	rule get_input4(cycle == 3);
-	    ifc_main.get(2'b11, 0.1);
+    rule get_input4(cycle == 3);
+	 ifc_main.get(2'b11, 0.1);
     endrule
-	rule get_input5(cycle == 4);
-	    ifc_main.get(2'b11, 9.9);
+    rule get_input5(cycle == 4);
+	  ifc_main.get(2'b11, 9.9);
     endrule
 	
     rule result;
-		let r = ifc_main.main_result;
-		$display("Result = %b : cycle =%d", r, cycle);
-	endrule
+	 let r = ifc_main.main_result;
+	 $display("Result = %b : cycle =%d", r, cycle);
+    endrule
 
     rule finish(cycle == 30);
         $finish(0);
@@ -257,7 +255,7 @@ Result = 01000001001001100101000111101011 : cycle =         12
 
 ### Synthesis 
 
-### TO RUN 
-use the comand make
+### To Run 
+Use the command *make* 
 
 
