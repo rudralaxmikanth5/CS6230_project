@@ -36,6 +36,10 @@ The figure shown below is the overall pipelined module.
 ![Pipline Stages ](Git_Images/pipeline.png)
 >
 *x* represents the given input. Here OP represents the function (which is also given as an input along with x), which enables the pipeline stages based on the function used. *Res_exp*, *Res_add*, *Res_sub*, *Res_div* are the results of the exponential, addition, subtraction and division stages respectively.
+   * 00: tanh(x)
+   * 01: sigmoid(x)
+   * 10: LReLu(x)
+   * 11: SeLu(x)
 >
 ### Implementation of the pipeline stages using Bluespec 
 Each of the six stages represents a specific operation, such as addition, subtraction, and division. In Bluespec, modules are used to encapsulate these stages of the design, providing a structured and modular approach to hardware description. These modules are used as submodules in the top module which represents the overall pipelined design.
@@ -44,8 +48,34 @@ The folders FAC, ADD, SUB, DIV and COMP contain the modules. For example, the AD
 >
 FloatingPoint library in Bluespec and Shakti's Fbox were used as a reference for making the addition and subtraction modules represented by *add.bsv* and *sub.bsv* files respectively.
 >
-#### STAGE 1 - Factor 
+### STAGE 1 - Factor 
+>
+The module named *mkfactor_s1* performs factorization operations on a floating-point number x based on an operation code (opcode)
+>
+Factorization is performed based on the rules and opcode:
+* tanh(x): Doubles the input value.
+* sigmoid (x): Negates the input value.
+* LReLu(x) or SeLu(x): Leaves the input value unchanged.
+>
+1. opcode :
+   * The opcode is a 2-bit value that determines the type of factorization operation to be performed.
+2. Interface Methods:
+   * The module implements the methods specified in the Ifc_factor_s1 interface
+   * get(Bit#(2) op, Float x): Initiates the factorization process by providing an opcode (op) and a floating-point number (x).
+   * factor_result: Retrieves the result of the factorization.
+   * pass_in(Float x): Passes an input value into the module.
+   * pass_out: Retrieves the input value stored in the module.
+3. Registers and Data Flow:
+   * The module uses registers (input_x, factor_res, in, opcode, input_valid_factor) to manage the data flow and store intermediate results.
+   * The input_valid_factor flag indicates whether valid input is present.
+4. Rules for Factorization:
+   * The module defines three rules, each corresponding to a different factorization operation based on the opcode:
+   * tanh(x): Doubles the input value (factor_res <= 2 * input_x)
+   * sigmoid(x): Negates the input value (factor_res <= -1 * input_x)
+   * LReLu(x) or SeLu(x): Leaves the input value unchanged (factor_res <= 1 * input_x).
+  
 
+>
 #### STAGE 2 - Exp
 
 #### STAGE 3 - Add
