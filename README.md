@@ -94,3 +94,5 @@ Factorization is performed based on the rules and opcode:
 
 ### TO RUN 
 use the comand make
+
+
