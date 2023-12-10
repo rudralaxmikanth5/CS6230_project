@@ -193,7 +193,7 @@ module mkTb();
 		  $display("Result = %b : cycle =%d", r, cycle;
 	endrule
 
-  rule finish(status == 30);
+  rule finish(cycle == 30);
         $finish(0);
   endrule
 endmodule: mkTb
@@ -207,6 +207,52 @@ Result = 01000001001100110011001100110011 : cycle =         10
 Result = 00111110010011001100110011001100 : cycle =         11
 Result = 00000000000000000000000000000000 : cycle =         12
 
+```
+
+ #### Test case 4 - SeLu(x)
+ ```
+module mkTb();
+    Reg#(int) cycle <- mkReg(0);
+    Ifc_main ifc_main <- mk_main;
+
+    rule stage;
+        cycle <= cycle + 1;
+    endrule 
+
+    rule get_input1(cycle == 0);
+        ifc_main.get(2'b11, 12.5);
+    endrule
+    rule get_input2(cycle == 1);
+        ifc_main.get(2'b11, 2.8);
+    endrule
+	rule get_input3(cycle == 2);
+	    ifc_main.get(2'b11, 0);
+    endrule
+	rule get_input4(cycle == 3);
+	    ifc_main.get(2'b11, 0.1);
+    endrule
+	rule get_input5(cycle == 4);
+	    ifc_main.get(2'b11, 9.9);
+    endrule
+	
+    rule result;
+		let r = ifc_main.main_result;
+		$display("Result = %b : cycle =%d", r, cycle);
+	endrule
+
+    rule finish(cycle == 30);
+        $finish(0);
+    endrule
+endmodule: mkTb
+
+ ```
+Result:
+```
+Result = 01000001010100011111111111111111 : cycle =          8
+Result = 01000000001111000010100011110101 : cycle =          9
+Result = 00000000000000000000000000000000 : cycle =         10
+Result = 00111101110101110000101000111100 : cycle =         11
+Result = 01000001001001100101000111101011 : cycle =         12
 ```
 
 ### Synthesis 
