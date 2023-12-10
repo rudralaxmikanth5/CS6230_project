@@ -4,7 +4,7 @@
 The activation functions are simple mathematical functions that convert a given input into a desired output within a specific range. In this project, we used : tanh(x), sigmoid(x), leaky_ReLu(x), SeLu(x).
 These functions are evaluated using several pipelining stages, each stage supports a unary operation like addition, subtraction, division, etc.
 #### 1) tanh(x) 
-> tanh(x) uses exponential, addition, subtraction, and division operations. In the first expression, we will have to calculate e^x and  e^x separately, but when we simplify it to the second expression we will just use the exponential stage once e^2x. In this case, I need one more stage to factor x to 2x.
+> tanh(x) uses exponential, addition, subtraction, and division operations. In the first expression, we will have to calculate $e^x$ and  $e^x$ separately, but when we simplify it to the second expression we will just use the exponential stage once $e^(2x)$. In this case, I need one more stage to factor x to 2x.
 > 
 ![](Git_Images/tanh(x).png)
 
@@ -23,7 +23,7 @@ These functions are evaluated using several pipelining stages, each stage suppor
 ![](Git_Images/SeLu.png)
 ### Pipeline stages  
 >  
-After simplifying the expressions of the activation functions such that we use a minimum number of pipeline stages, we got **6** stages. The stages are Factor, Exponential, Addition, Subtraction, Division and Comparison. We made the order of the stages such that we can reuse the previous stages' output as input for the upcoming stages. For example, in the tanh(x) function value of e^2x which is evaluated in the second stage is given as inputs to the addition and subtraction stages.
+After simplifying the expressions of the activation functions such that we use a minimum number of pipeline stages, we got **6** stages. The stages are Factor, Exponential, Addition, Subtraction, Division and Comparison. We made the order of the stages such that we can reuse the previous stages' output as input for the upcoming stages. For example, in the tanh(x) function value of $e^2x$ which is evaluated in the second stage is given as inputs to the addition and subtraction stages.
 >   
 ![](Git_Images/stages.png)
 >
@@ -61,10 +61,10 @@ Factorization is performed based on the rules and opcode:
    * The opcode is a 2-bit value that determines the type of factorization operation to be performed.
 2. Interface Methods:
    * The module implements the methods specified in the Ifc_factor_s1 interface
-   * get(Bit#(2) op, Float x): Initiates the factorization process by providing an opcode (op) and a floating-point number (x).
-   * factor_result: Retrieves the result of the factorization.
-   * pass_in(Float x): Passes an input value into the module.
-   * pass_out: Retrieves the input value stored in the module.
+   *  method Action get(Bit#(2) op, Float x): Initiates the factorization process by providing an opcode (op) and a floating-point number (x).
+   * method Float factor_result: Retrieves the result of the factorization.
+   * method Action pass_in(Float x): Passes an input value into the module.
+   * method Float pass_out: Gets the input value stored in the module.
 3. Registers and Data Flow:
    * The module uses registers (input_x, factor_res, in, opcode, input_valid_factor) to manage the data flow and store intermediate results.
    * The input_valid_factor flag indicates whether valid input is present.
@@ -73,14 +73,60 @@ Factorization is performed based on the rules and opcode:
    * tanh(x): Doubles the input value (factor_res <= 2 * input_x)
    * sigmoid(x): Negates the input value (factor_res <= -1 * input_x)
    * LReLu(x) or SeLu(x): Leaves the input value unchanged (factor_res <= 1 * input_x).
-  
-
 >
 #### STAGE 2 - Exp
+1. opcode :
+   * 00, 01, or 11: Invoke the exponentiation operation using the mkExp module. Otherwise, directly passes through the input value without exponentiation.
+2. Interface Methods:
+   * The module implements the methods specified in the Ifc_exp_s2 interface
+   * method Action get(Bit#(2) op, Float x): Initiates the exponentiation process by providing an opcode (op) and a floating-point number (x).
+   * method Float exp_result: Gets the result of the exponentiation operation.
+   * method Action pass_in(Float x): Passes an input value into the module.
+   * method Float pass_out: Retrieves the input value stored in the module.
+3. Logic of the Exp module (mkExp):
+   * Stage 1: Checks if the input value is small; if so, directly passes through the value. Otherwise, performs factorization based on the magnitude. For example, if x is 0.7, it is passed onto the next stage.
+   * Stage 2: Similar to Stage 1 but includes additional terms for larger values. For example, if the value of x is 3.2, then it factorizes the calculation of $e^(3.2)$ into e^3 and $e^(0.2)$. 0.2 is passed onto the stages which use Taylor series terms to calculate $e^(0.2)$ (We have used the first 5 terms of the Taylor series of $e^x$).
+   * Stages 3-7: Computes successive terms of the Taylor series.
+3. Registers and Data Flow:
+   * Registers and wires (x_wire, stage0_x, stage1_x, etc.) manage the flow of data between different stages.
+   * en_stage1 is a PulseWire used to trigger the initiation of the exponentiation process.
+4. Rules for Factorization:
+   * tanh(x), sigmoid(x) and SeLu(x): Calculates the exponential value
+   * SeLu(x): Leaves the input value unchanged (exp_res <= input_x;)
 
 #### STAGE 3 - Add
+1. opcode :
+   * 00, 01: Invoke the addition operation using the mk_add module. Otherwise, directly passes through the input value without addition.
+2. Interface Methods:
+   * The module implements the methods specified in the Ifc_add_s3 interface
+   * method Action get(Bit#(2) op, Float x): Takes an opcode (op) and a floating-point value (x) as input and sets the input_x and opcode register accordingly.
+   * method Float add_result: Returns the result of the addition operation performed in the add submodule.
+   * method Action pass_in(Float x, Float exp_r): Takes two floating-point values (x and exp_r) as input and sets the in and exp_pass registers accordingly.
+   * method Float pass_out: Returns the value stored in the register.
+   * method Float exp_res_out: Returns the value stored in the exp_pass register.
+3. Registers and Data Flow:
+   * Registers (input_x, add_res, exp_pass) manage the flow of data between different stages.
+4. Rules for Factorization:
+   * tanh(x), sigmoid(x): Undergoes addition operation
+   * LReLu(x) or SeLu(x): Leaves the input value unchanged (add_res <= input_x);
 
 #### STAGE 4 - Sub
+1. opcode :
+   * 00, 11: Invoke the subtraction operation using the mk_sub module. Otherwise, directly passes through the input value without subtraction.
+2. Interface Methods:
+   * The module implements the methods specified in the Ifc_sub_s4 interface
+   * method Action get(Bit#(2) op, Float x): Takes an opcode (op) and a floating-point value (x) as input and sets the input_x and opcode register accordingly.
+   * method Float sub_result: Returns the result of the subtraction operation.
+   * method Action pass_in(Float x, Float exp_r): Takes two floating-point values (x and exp_r) as input and sets the in and exp_pass registers accordingly.
+   * method Float pass_out: Returns the value stored in the register.
+   * method Float add_res_out: Returns the additional value passed through the pipeline.
+3. Registers and Data Flow:
+   * Registers (input_x, sub_res, add_pass) manage the flow of data between different stages.
+   * sub1_valid to sub4_valid: Flags indicating the stages of the subtraction operation.
+4. Rules for Factorization:
+   * tanh(x), SeLu(x): Undergoes subtraction operation
+   * sigmoid(x) or SeLu(x): Leaves the input value unchanged (add_res <= input_x);
+
 
 #### STAGE 5 - Div
 
