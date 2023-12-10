@@ -162,7 +162,43 @@ Factorization is performed based on the rules and opcode:
 ### Overall Latency and Optimisation
 
 ### Test cases & Results 
+ #### Test case 3 - LReLu(x)
+```
+module mkTb();
+    Reg#(int) cycle <- mkReg(0);
+    Ifc_main ifc_main <- mk_main;
 
+    rule stage;
+        cycle <= cycle + 1;
+    endrule 
+    
+    rule input1 (cycle = 0);
+        ifc_main.get(2'b10, -5.3);
+    endrule
+    rule input2 (cycle == 1);
+        ifc_main.get(2'b10, 3.7);
+    endrule
+	rule input3 (cycle == 2);
+	    ifc_main.get(2'b10, 11.2);
+    endrule
+	rule input4 (cycle == 3);
+	    ifc_main.get(2'b10, 0.2);
+    endrule
+	rule input5 (cycle == 4);
+	    ifc_main.get(2'b10, 0);
+    endrule
+
+  rule result;
+		  let r = ifc_main.main_result;
+		  $display("Result = %b : cycle =%d", r, cycle;
+	endrule
+
+  rule finish(status == 30);
+        $finish(0);
+  endrule
+endmodule: mkTb
+
+```
 
 
 ### Synthesis 
