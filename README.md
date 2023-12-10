@@ -85,7 +85,7 @@ Factorization is performed based on the rules and opcode:
    * method Float pass_out: Retrieves the input value stored in the module.
 3. Logic of the Exp module (mkExp):
    * Stage 1: Checks if the input value is small; if so, directly passes through the value. Otherwise, performs factorization based on the magnitude. For example, if x is 0.7, it is passed onto the next stage.
-   * Stage 2: Similar to Stage 1 but includes additional terms for larger values. For example, if the value of x is 3.2, then it factorizes the calculation of $e^(3.2)$ into e^3 and $e^(0.2)$. 0.2 is passed onto the stages which use Taylor series terms to calculate $e^(0.2)$ (We have used the first 5 terms of the Taylor series of $e^x$).
+   * Stage 2: Similar to Stage 1 but includes additional terms for larger values. For example, if the value of x is 3.2, then it factorizes the calculation of $e^(3.2)$ into $e^3$ and $e^(0.2)$. 0.2 is passed onto the stages which use Taylor series terms to calculate $e^(0.2)$ (We have used the first 5 terms of the Taylor series of $e^x$).
    * Stages 3-7: Computes successive terms of the Taylor series.
 3. Registers and Data Flow:
    * Registers and wires (x_wire, stage0_x, stage1_x, etc.) manage the flow of data between different stages.
@@ -140,3 +140,5 @@ Factorization is performed based on the rules and opcode:
 
 ### TO RUN 
 use the comand make
+
+
