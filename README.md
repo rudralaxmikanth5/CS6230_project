@@ -133,18 +133,15 @@ Factorization is performed based on the rules and opcode:
    * 00, 01: Invoke the division operation using the mk_div_op module. Otherwise, directly passes through the input value without division.
 2. Interface Methods:
    * The module implements the methods specified in the Ifc_div_s5 interface
-   * method Action get(Bit#(2) op, Float x, Float z): Takes an opcode and two floating-point numbers as input for either division or pass-through operation.
-   * method Float div_result: Returns the result of the division operation.
-   * method Action pass_in(Float x, Float sub_r): Takes two floating-point numbers to be passed through the pipeline.
-   * method Float pass_out: Returns the value stored in the register.
-   * method Float sub_res_out: Returns the result of the subtraction operation.
+   * method Action put(Float a, Float b, Bool c, Bit#(2) op): Takes an opcode and two floating-point numbers as input for either division or pass-through operation.
+   * method Maybe#(Float) get: Returns the result of the division operation.
+   * method Bit#(2) copy_x: Returns the value of factor_res to pass to the next stage.
+   * method Bit#(2) copy_op: This is used to pass the opcode to the next stage.
 3. Registers and Data Flow:
-   * Registers (input_x, div_res, sub_pass) manage the flow of data between different stages.
-   * input_valid_div: Flag indicating whether a valid input for division is present.
-   * div1_valid and div2_valid: Flags indicating the stages of the division operation.
+   * Registers (op, x) manage the flow of data between different stages.
 4. Rules:
-   * tanh(x), sigmoid(x): Undergoes division operation
-   * LReLu(x) or SeLu(x): Leaves the input value unchanged (div_res <= input_x);
+   * tanh(x), sigmoid(x): Undergoes division operation (op = 2'b00, 2b'01)
+   * LReLu(x) or SeLu(x): Leaves the input value unchanged (op = 2'b10, 2'b11);
 
 ### STAGE 6 - Comp
 1. opcode :
