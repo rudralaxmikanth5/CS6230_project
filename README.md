@@ -63,7 +63,7 @@ Factorization is performed based on the rules and opcode:
    * The module implements the methods specified in the Ifc_factor_s1 interface
    *  method Action put(Bit#(2) op, Maybe#(Float) x): Initiates the factorization process by providing an opcode (op) and a floating-point number (x).
    * method Maybe#(Float) factor_result: Retrieves the result of the factorization.
-   * method Bit#(2) copy_op: Is used to pass the opcode to the next stage.
+   * method Bit#(2) copy_op: This is used to pass the opcode to the next stage.
 3. Registers and Data Flow:
    * The module uses registers (input_x, factor_res, opcode) to manage the data flow and store intermediate results.
    * The Maybe# type is used to check the validity of a result.
@@ -78,36 +78,37 @@ Factorization is performed based on the rules and opcode:
    * 00, 01, or 11: Invoke the exponentiation operation using the mkExp module. Otherwise, directly passes through the input value without exponentiation.
 2. Interface Methods:
    * The module implements the methods specified in the Ifc_exp_s2 interface
-   * method Action get(Bit#(2) op, Float x): Initiates the exponentiation process by providing an opcode (op) and a floating-point number (x).
-   * method Float exp_result: Gets the result of the exponentiation operation.
-   * method Action pass_in(Float x): Passes an input value into the module.
-   * method Float pass_out: Retrieves the input value stored in the module.
+   * method Action put(Bit#(2) opcode, Maybe#(Float) x): Initiates the exponentiation process by providing an opcode (op) and factor_res (x).
+   * method Maybe#(Float) get: Gets the result of the exponentiation operation.
+   * method Float copy_x: Used to pass factor_res to the next stage.
+   * method Bit#(2) copy_op: This is used to pass the opcode to the next stage.
 3. Logic of the Exp module (mkExp):
-   * Stage 1: Checks if the input value is small; if so, directly passes through the value. Otherwise, performs factorization based on the magnitude. For example, if x is 0.7, it is passed onto the next stage.
-   * Stage 2: Similar to Stage 1 but includes additional terms for larger values. For example, if the value of x is 3.2, then it factorizes the calculation of $e^(3.2)$ into $e^3$ and $e^(0.2)$. 0.2 is passed onto the stages which use Taylor series terms to calculate $e^(0.2)$ (We have used the first 5 terms of the Taylor series of $e^x$).
+   * Stage 1: Checks if the input value is small; if so, directly passes through the value. Otherwise, performs factorization based on the magnitude. For example, if x is 0.7, it is passed on to the next stage.
+   * Stage 2: Similar to Stage 1 but includes additional terms for larger values. For example, if the value of x is 3.2, then it factorizes the calculation of $e^(3.2)$ into $e^2$ and $e^(1.2)$ based on the exponent term in floating point representation. Then $e^1.2$ is factorised to $e^1$ and $e^0.2$. Hence $e^3$ is calaculated using predefined values of $e^2$ and $e^1$. Now, 0.2 is passed onto the stages which use *Taylor series* terms to calculate $e^(0.2)$ (We have used the first 5 terms of the Taylor series of $e^x$).
    * Stages 3-7: Computes successive terms of the Taylor series.
 3. Registers and Data Flow:
-   * Registers and wires (x_wire, stage0_x, stage1_x, etc.) manage the flow of data between different stages.
-   * en_stage1 is a PulseWire used to trigger the initiation of the exponentiation process.
+   * Registers and wires (x_wire, op_wire, stage0_x, stage1_x, etc.) manage the flow of data between different stages.
+   * Reg#(Bool) type registers are used to check the validity of every stage.
+   * The result is tagged valid when s6_valid becomes True.
 4. Rules:
-   * tanh(x), sigmoid(x) and SeLu(x): Calculates the exponential value
-   * SeLu(x): Leaves the input value unchanged (exp_res <= input_x;)
+   * tanh(x), sigmoid(x) and SeLu(x): Calculates the exponential value (op = 2'b00, 2'b01, 2'b11)
+   * SeLu(x): Leaves the input value unchanged (op = 2'b10)
 
 ### STAGE 3 - Add
 1. opcode :
    * 00, 01: Invoke the addition operation using the mk_add module. Otherwise, directly passes through the input value without addition.
 2. Interface Methods:
    * The module implements the methods specified in the Ifc_add_s3 interface
-   * method Action get(Bit#(2) op, Float x): Takes an opcode (op) and a floating-point value (x) as input and sets the input_x and opcode register accordingly.
-   * method Float add_result: Returns the result of the addition operation performed in the add submodule.
-   * method Action pass_in(Float x, Float exp_r): Takes two floating-point values (x and exp_r) as input and sets the in and exp_pass registers accordingly.
-   * method Float pass_out: Returns the value stored in the register.
-   * method Float exp_res_out: Returns the value stored in the exp_pass register.
+   * method Action put(Bit#(2) op, Float copy_xin, Maybe#(Float) x): Takes an opcode (op), factor_res, and exp_res as input and sets the input and opcode register according to the opcode condition.
+   *method ActionValue#(Maybe#(Float)) add_result: Returns the result of the addition operation performed in the add submodule.
+   * method Float copy_x: Returns the value of factor_res to pass to the next stage.
+   * method Bit#(2) copy_op:  This is used to pass the opcode to the next stage.
 3. Registers and Data Flow:
-   * Registers (input_x, add_res, exp_pass) manage the flow of data between different stages.
+   * Registers op1, op2,..op4, x1,x2,..x4 are used.
+   * Reg#(Bool) type registers are used to check the validity of the stages.
 4. Rules:
-   * tanh(x), sigmoid(x): Undergoes addition operation
-   * LReLu(x) or SeLu(x): Leaves the input value unchanged (add_res <= input_x);
+   * tanh(x), sigmoid(x): Undergoes addition operation (op = 2'b00, 2'b01)
+   * LReLu(x) or SeLu(x): Leaves the input value unchanged (op = 2'b10, 2'b11);
 
 ### STAGE 4 - Sub
 1. opcode :
