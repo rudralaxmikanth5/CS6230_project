@@ -1,6 +1,5 @@
-import FloatingPoint     ::*;
-import ConfigReg         ::*;
-
+import FloatingPoint ::*;
+import ConfigReg ::*;
 typedef FloatingPoint#(8,23) Float;
 
 function Float generate_2_x (Bit#(8) x);
@@ -70,276 +69,223 @@ function Float generate_e_2_negx (Bit#(8) x);
 endfunction 
 
 interface Ifc_exp;
-    method Action get_x(Float x);
-    method Float res; 
+    method Action put(Bit#(2) opcode, Maybe#(Float) x);
+    method Maybe#(Float) get; 
+	method Float copy_x;
+	method Bit#(2) copy_op;
 endinterface
 
+// (*synthesize*)
 module mkExp(Ifc_exp);
 	// Stage 0
-	PulseWire en_stage1 <- mkPulseWire;
-    Reg#(Maybe#(Float)) stage0_x <- mkReg(tagged Invalid);
+	Reg#(Maybe#(Float)) x_wire <- mkWire;
+	Reg#(Bit#(2)) op_wire <- mkWire;
+    Reg#(Float) stage0_x <- mkReg(defaultValue);
 
 	// Stage 1
-	Reg#(Maybe#(Float)) stage1_x <- mkReg(tagged Invalid);
+	Reg#(Bit#(2)) op1 <- mkReg(0);
+	Reg#(Float) x1 <- mkReg(0);
+	Reg#(Bool) s1_valid <- mkReg(False);
+	Reg#(Float) stage1_x <- mkReg(defaultValue);
 	Reg#(Float) stage1_int_res <- mkReg(defaultValue);
 
 	// Stage 2
-    Reg#(Maybe#(Float)) stage2_x <- mkReg(tagged Invalid);
+	Reg#(Bit#(2)) op2 <- mkReg(0);
+	Reg#(Float) x2 <- mkReg(0);
+	Reg#(Bool) s2_valid <- mkReg(False);
+    Reg#(Float) stage2_x <- mkReg(defaultValue);
 	Reg#(Float) stage2_int_res <- mkReg(defaultValue);
 
 	// Stage 3
+	Reg#(Bit#(2)) op3 <- mkReg(0);
+	Reg#(Float) x3 <- mkReg(0);
+	Reg#(Bool) s3_valid <- mkReg(False);
 	Reg#(Float) txv_1 <- mkReg(defaultValue);
 	Reg#(Float) stage3_int_res <- mkReg(defaultValue);
-	Reg#(Maybe#(Float)) tsum_1 <- mkReg(tagged Invalid);
+	Reg#(Float) tsum_1 <- mkReg(defaultValue);
 
 	// Stage 4
+	Reg#(Bit#(2)) op4 <- mkReg(0);
+	Reg#(Float) x4 <- mkReg(0);
+	Reg#(Bool) s4_valid <- mkReg(False);
     Reg#(Float) txv_2 <- mkReg(defaultValue);
 	Reg#(Float) stage4_int_res <- mkReg(defaultValue);
-	Reg#(Maybe#(Float)) tsum_2 <- mkReg(tagged Invalid);
+	Reg#(Float) tsum_2 <- mkReg(defaultValue);
 
 	// Stage 5
+	Reg#(Bit#(2)) op5 <- mkReg(0);
+	Reg#(Float) x5 <- mkReg(0);
+	Reg#(Bool) s5_valid <- mkReg(False);
 	Reg#(Float) txv_3 <- mkReg(defaultValue);
 	Reg#(Float) stage5_int_res <- mkReg(defaultValue);
-	Reg#(Maybe#(Float)) tsum_3 <- mkReg(tagged Invalid);
+	Reg#(Float) tsum_3 <- mkReg(defaultValue);
 
 	// Stage 6
+	Reg#(Bit#(2)) op6 <- mkReg(0);
+	Reg#(Float) x6 <- mkReg(0);
+	Reg#(Bool) s6_valid <- mkReg(False);
 	Reg#(Float) txv_4 <- mkReg(defaultValue);
 	Reg#(Float) stage6_int_res <- mkReg(defaultValue);
-	Reg#(Maybe#(Float)) tsum_4 <- mkReg(tagged Invalid);
+	Reg#(Float) tsum_4 <- mkReg(defaultValue);
 
     // Stage 7 
-    Reg#(Maybe#(Float)) result <- mkReg(tagged Invalid);
+	Reg#(Bit#(2)) op7 <- mkReg(0);
+	Reg#(Float) x7 <- mkReg(0);
+    Reg#(Maybe#(Float)) result <- mkReg(defaultValue);
 
 	// Stage 1
-	rule stage1_check_if_smol if (isValid(stage0_x));
-		Float x = stage0_x.Valid;
+	rule stage1_check_if_smol;
+		Float x = x_wire.Valid;
+		op1 <= op_wire;
+		x1 <= x;
+
 		if (x.exp < 127) begin
-			stage1_x <= tagged Valid(x);
+			stage1_x <= x;
 			stage1_int_res <= 1;
 		end
 		else begin
 			Bit#(8) exp_diff = x.exp - 127;
 			if (x.sign == False) begin 
 				Float xdiff = x - generate_2_x(exp_diff);
-				stage1_x <= tagged Valid(xdiff);
+				stage1_x <= xdiff;
 				stage1_int_res <= generate_e_2_x(exp_diff);
 			end 
 			else begin 
 				Float xdiff = x - generate_2_negx(exp_diff);
-				stage1_x <= tagged Valid(xdiff);
+				stage1_x <= xdiff;
 				stage1_int_res <= generate_e_2_negx(exp_diff);
 			end  
-	
 		end 
 	endrule
 
-	rule disable_stage2 (!isValid(stage0_x));
-		stage1_x <= tagged Invalid;
+	rule s1_valid_pass;
+		s1_valid <= isValid(x_wire);
 	endrule
 
 	// Stage 2
-	rule stage2_check_if_smol if (isValid(stage1_x));    // isValid(stage_x) is 1 
-		Float x = stage1_x.Valid;   
+	rule stage2_check_if_smol;  
+		Float x = stage1_x;   
+		op2 <= op1;
+		x2 <= x1;
 
 		if (x.exp < 127) begin
-			stage2_x <= tagged Valid(x);
+			stage2_x <= x;
 			stage2_int_res <= stage1_int_res;
 		end
 		else begin
 			Bit#(8) exp_diff = x.exp - 127;
 			if (x.sign == False) begin 
-			Float xdiff = x - generate_2_x(exp_diff);
-			stage2_x <= tagged Valid(xdiff);
-			stage2_int_res <= stage1_int_res * generate_e_2_x(exp_diff);
+				Float xdiff = x - generate_2_x(exp_diff);
+				stage2_x <= xdiff;
+				stage2_int_res <= stage1_int_res * generate_e_2_x(exp_diff);
+			end else begin 
+				Float xdiff = x - generate_2_negx(exp_diff);
+				stage2_x <= xdiff;
+				stage2_int_res <= stage1_int_res * generate_e_2_negx(exp_diff);
 			end 
-			else begin 
-			Float xdiff = x - generate_2_negx(exp_diff);
-			stage2_x <= tagged Valid(xdiff);
-			stage2_int_res <= stage1_int_res * generate_e_2_negx(exp_diff);
-
-			end 
-
 		end 
 	endrule
 
-	rule disable_stage3 (!isValid(stage1_x));
-		stage2_x <= tagged Invalid;
+	rule s2_valid_pass;
+		s2_valid <= s1_valid;
 	endrule
 
 	// Stage 3 taylor first term 
-    rule stage3 if (isValid(stage2_x));
+    rule stage3;
 		Float z = FloatingPoint {
             sign:       False,
             exp:      8'b01111111,
             sfd:      23'b00000000000000000000000
         }; 
-		txv_1 <= stage2_x.Valid;
-        Float tsum = z + stage2_x.Valid; 
-		tsum_1 <= tagged Valid(tsum);
+		op3 <= op2;
+		x3 <= x2;
+
+		txv_1 <= stage2_x;
+        Float tsum = z + stage2_x; 
+		tsum_1 <= tsum;
 		stage3_int_res <= stage2_int_res;
 	endrule 
 
-	rule disable_stage4 (!isValid(stage2_x));
-		tsum_1 <= tagged Invalid;
+	rule s3_valid_pass;
+		s3_valid <= s2_valid;
 	endrule
 
 	// Stage 4 taylor second term 
-	rule stage4 if (isValid(tsum_1));
+	rule stage4;
 		txv_2 <= txv_1;
-		Float tsum_temp = tsum_1.Valid;
+		op4 <= op3;
+		x4 <= x3;
+		Float tsum_temp = tsum_1;
 		Float tsum = tsum_temp + txv_1*txv_1*0.5;
-        tsum_2 <= tagged Valid(tsum);
+        tsum_2 <= tsum;
 		stage4_int_res <= stage3_int_res;
 	endrule 
 
-	rule disable_stage5 (!isValid(tsum_1));
-		tsum_2 <= tagged Invalid;
+	rule s4_valid_pass;
+		s4_valid <= s3_valid;
 	endrule
 
 	// Stage 5 taylor third term 
-	rule stage5 if (isValid(tsum_2));
+	rule stage5;
 		txv_3 <= txv_2;
-		Float tsum_temp = tsum_2.Valid;
+		op5 <= op4;
+		x5 <= x4;
+		Float tsum_temp = tsum_2;
 		Float tsum = tsum_temp + txv_2*txv_2*txv_2*0.167;
-		tsum_3 <= tagged Valid (tsum);
+		tsum_3 <= tsum;
 		stage5_int_res <= stage4_int_res;
 	endrule 
 
-	rule disable_stage6 (!isValid(tsum_2));
-		tsum_3 <= tagged Invalid;
+	rule s5_valid_pass;
+		s5_valid <= s4_valid;
 	endrule
 
 	// Stage 6 taylor four term
-	rule stage6 if (isValid(tsum_3));
+	rule stage6;
 		txv_4 <= txv_3;
-		Float tsum_temp = tsum_3.Valid;
+		op6 <= op5;
+		x6 <= x5;
+		Float tsum_temp = tsum_3;
 		Float tsum = (tsum_temp + txv_3*txv_3*txv_3*txv_3*0.0417);
-        tsum_4 <= tagged Valid (tsum);
+        tsum_4 <= tsum;
         stage6_int_res <= stage5_int_res;
 	endrule 
 
-	rule disable_stage7 (!isValid(tsum_3));
-		tsum_4 <= tagged Invalid;
+	rule s6_valid_pass;
+		s6_valid <= s5_valid;
 	endrule
-    
+
     // Stage 7 taylor five term
-    rule stage7 if (isValid(tsum_4));
+    rule stage7;
+		op7 <= op6;
+		x7 <= x6;
         Float tx_5 = txv_4;
-        Float tsum_temp = tsum_4.Valid;
+        Float tsum_temp = tsum_4;
 		Float tsum = (tsum_temp + tx_5*tx_5*tx_5*tx_5*tx_5*0.00833) * stage6_int_res;
-        result <= tagged Valid(tsum);
+		
+		if (s6_valid)
+        	result <= tagged Valid(tsum);
+		else 
+			result <= tagged Invalid;
     endrule 
 
-	rule disable_result (!isValid(tsum_4));
-		result <= tagged Invalid;
-	endrule
-
-	// Stage 0
-	rule disable_stage1 (!en_stage1);
-		stage0_x <= tagged Invalid;
-	endrule
-
-	method Action get_x(Float x_input);
-		stage0_x <= tagged Valid(x_input);
-		en_stage1.send();
+	method Action put(Bit#(2) opcode, Maybe#(Float) x_input);
+		x_wire <= x_input;
+		op_wire <= opcode;
+		// $display("%b hi", opcode);
+		// $finish;
 	endmethod
 
 	// Final stage
-    method Float res if (isValid(result));
-		return result.Valid;
+    method Maybe#(Float) get;
+		return result;
+	endmethod
+
+	method Bit#(2) copy_op;
+		return op7;
+	endmethod 
+	
+	method Float copy_x;
+		return x7;
 	endmethod
 endmodule
-
-interface Ifc_exp_s2;
-    method Action get(Bit#(2) op, Float x);
-    method Float exp_result; 
-    method Action pass_in(Float x);
-    method Float pass_out; 
-endinterface 
-
-module mkexp_s2(Ifc_exp_s2); 
-    Reg#(Float) input_x <- mkReg(0);
-    Reg#(Float) exp_res <- mkReg(0);
-    Reg#(Float) in <- mkReg(0);
-    Reg#(Bit#(2)) opcode <- mkReg(0);
-    Reg#(Bool) input_valid_exp <- mkReg(False);
-
-    Reg#(Bool) exp1_valid <- mkReg(False);
-	Reg#(Bool) exp2_valid <- mkReg(False);
-	Reg#(Bool) exp3_valid <- mkReg(False);
-	Reg#(Bool) exp4_valid <- mkReg(False);
-	Reg#(Bool) exp5_valid <- mkReg(False);
-	Reg#(Bool) exp6_valid <- mkReg(False);
-    Ifc_exp ifc_exp <- mkExp;
-
-    rule exp_1 (((opcode == 2'b00) || (opcode == 2'b01) || (opcode == 2'b11)) && input_valid_exp);
-       ifc_exp.get_x(input_x);
-       exp1_valid <= True;
-    endrule 
-
-    rule exp_2 ((opcode == 2'b10) && input_valid_exp);
-       exp_res <= input_x;
-    endrule 
-    rule exp1 (exp1_valid);
-		exp2_valid <= True;
-	endrule
-	rule exp2 (exp2_valid);
-		exp3_valid <= True;
-	endrule
-	rule exp3 (exp3_valid);
-		exp4_valid <= True;
-	endrule
-	rule exp4 (exp4_valid);
-		exp5_valid <= True;
-	endrule
-	rule exp5 (exp5_valid);
-		exp6_valid <= True;
-	endrule
-
-    rule exp1_res (((opcode == 2'b00) || (opcode == 2'b01) || (opcode == 2'b11)) && input_valid_exp && exp6_valid );
-        let r = ifc_exp.res;
-        exp_res <= r;
-    endrule
-
-    method Action get(Bit#(2) op, Float x);
-        input_x <= x;
-        opcode <= op;
-        input_valid_exp <= True;
-     endmethod
- 
-     method Float exp_result; 
-        return exp_res;
-     endmethod 
- 
-     method Action pass_in(Float x);
-        in <= x;
-    endmethod 
-    method Float pass_out;
-        return in;
-    endmethod
-endmodule 
-
-(*synthesize*)
-module mkTb();   
-    Reg#(int) cycle <- mkReg(0);
-
-    Ifc_exp_s2 fp_exp <- mkexp_s2;
-    rule stages;
-        cycle <= cycle + 1;
-    endrule
-    rule get1 (cycle == 0);
-       fp_exp.get(2'b01, 2);
-    endrule
-
-    // rule get2 (cycle == 1);
-    //    fp_exp.get(2'b00, 1.2);
-    // endrule
-
-    rule res;
-        let r = fp_exp.exp_result;
-        $display("Result = %b : cycle = %d",  r, cycle);
-    endrule 
-    rule done(cycle == 15);
-        $finish(0);
-    endrule 
-endmodule:mkTb 
