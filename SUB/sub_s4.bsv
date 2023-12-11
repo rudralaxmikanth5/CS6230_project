@@ -530,95 +530,62 @@ module mk_fpu_add_sub_sp_instance(Ifc_sub#(8,23,`STAGES_FADD_SP));
 endmodule
 
 interface Ifc_sub_s4;
-    method Action get(Bit#(2) op, Float x);
-    method Float sub_result; 
-    method Action pass_in(Float x, Float add_r);
-    method Float pass_out; 
-    method Float add_res_out;
+    method Action put(Bit#(2) op, Float copy_x, Maybe#(Float) add_res);
+    method ActionValue#(Maybe#(Float)) sub_result; 
+    method Float copy_x; 
+	method Bit#(2) copy_op;
 endinterface
 
+// (*synthesize*)
 module mksub_s4(Ifc_sub_s4); 
-    Reg#(Float) input_x <- mkReg(0); 
-    Reg#(Float) sub_res <- mkReg(0);
-    Reg#(Float) add_pass <- mkReg(0);
-    Reg#(Float) in <- mkReg(0);
+	Reg#(Bit#(2)) op1 <- mkReg(0), op2 <- mkReg(0), op3 <- mkReg(0), op4 <- mkReg(0);
 
-    Reg#(Bit#(2)) opcode <- mkReg(0);
-    Reg#(Bool) input_valid_sub <- mkReg(False);
+	Reg#(Maybe#(Float)) x1 <- mkReg(tagged Invalid), x2 <- mkReg(tagged Invalid), x3 <- mkReg(tagged Invalid), x4 <- mkReg(tagged Invalid);
+	
+    Ifc_sub#(8,23,4) sub <- mk_sub;
 
-    Reg#(Bool) sub1_valid <- mkReg(False);
-    Reg#(Bool) sub2_valid <- mkReg(False);
-    Reg#(Bool) sub3_valid <- mkReg(False);
-    Reg#(Bool) sub4_valid <- mkReg(False);
+	Reg#(Maybe#(Float)) temp_x1 <- mkDWire(tagged Invalid);
 
-    Ifc_sub#(8,23,4) ifc_sub <- mk_sub;
-
-    rule sub_1 (((opcode == 2'b00) || (opcode == 2'b11))&& (input_valid_sub));
-        RoundMode op4 = Rnd_Nearest_Even;
-        ifc_sub.send(tuple3(input_x,-1,op4));
-        sub1_valid <= True;
+    rule sub2;
+		op2 <= op1;
+		x2 <= x1;
     endrule 
-    rule sub1 (sub1_valid);
-	    sub2_valid <= True;
-    endrule 
-    rule sub2 (sub2_valid);
-	    sub3_valid <= True;
-    endrule
-    rule sub3 (sub3_valid);
-	    sub4_valid <= True;
+
+    rule sub3;
+		op3 <= op2;
+		x3 <= x2;
     endrule
 
-    rule sub_1_res (((opcode == 2'b00) || (opcode == 2'b11)) && input_valid_sub && sub4_valid );
-        let r = ifc_sub.receive();
-        sub_res <= r.value;
+    rule sub4;
+		op4 <= op3;
+		x4 <= x3;
     endrule
 
-    rule sub2_res (((opcode == 2'b01)||(opcode == 2'b10)) && input_valid_sub );
-        sub_res <= input_x;
-    endrule
+	rule pass_inp;
+		x1 <= temp_x1;
+	endrule
 
-    method Action get(Bit#(2) op, Float x);
-       input_x <= x;
-       opcode <= op;
-       input_valid_sub <= True;
-    endmethod
+	method Action put(Bit#(2) op, Float copy_x, Maybe#(Float) add_res);
+		op1 <= op;
+		if (isValid(add_res)) begin 
+			if (op[1] == 0)
+				temp_x1 <= add_res;
+			else
+				temp_x1 <= tagged Valid(copy_x);
+		end
 
-    method Float sub_result; 
-       return sub_res;
+		RoundMode rm = Rnd_Nearest_Even;
+        sub.send(tuple3(add_res.Valid, -2, rm));
+	endmethod 
+
+    method ActionValue#(Maybe#(Float)) sub_result; 
+		let r = sub.receive();
+		if (isValid(x4))
+			return tagged Valid(r.value);
+		else 
+			return tagged Invalid;
     endmethod 
-
-    method Action pass_in(Float x, Float add_r);
-       in <= x;
-       add_pass <= add_r;
-    endmethod 
-    method Float pass_out;
-       return in;
-    endmethod
-    method Float add_res_out;
-       return add_pass;
-    endmethod
-endmodule 
-
-(*synthesize*)
-module mkTb();   
-    Reg#(int) cycle <- mkReg(0);
-
-    Ifc_sub_s4 fp_sub <- mksub_s4;
-    rule stages;
-        cycle <= cycle + 1;
-    endrule
-    rule get1 (cycle == 0);
-       fp_sub.get(2'b10, 2);
-    endrule
-
-    rule get2 (cycle == 1);
-       fp_sub.get(2'b00, 1.2);
-    endrule
-    rule res;
-        let sub_r = fp_sub.sub_result;
-        $display("Result = %b : cycle = %d", sub_r, cycle);
-    endrule 
-    rule done(cycle == 15);
-        $finish(0);
-    endrule 
-endmodule:mkTb 
+	
+	method Float copy_x = x4.Valid; 
+	method Bit#(2) copy_op = op4;
+endmodule
