@@ -133,7 +133,7 @@ Factorization is performed based on the rules and opcode:
    * 00, 01: Invoke the division operation using the mk_div_op module. Otherwise, directly passes through the input value without division.
 2. Interface Methods:
    * The module implements the methods specified in the Ifc_div_s5 interface
-   * method Action put(Float a, Float b, Bool c, Bit#(2) op): Takes an opcode and two floating-point numbers as input for either division or pass-through operation.
+   * method Action put(Float a, Float b, Bool c, Bit#(2) op): Takes an opcode, input_1( 1 if op = 2'b01, else sub_res),and factor_res as inputs for either division or pass-through operation.
    * method Maybe#(Float) get: Returns the result of the division operation.
    * method Bit#(2) copy_x: Returns the value of factor_res to pass to the next stage.
    * method Bit#(2) copy_op: This is used to pass the opcode to the next stage.
@@ -148,15 +148,14 @@ Factorization is performed based on the rules and opcode:
    * 10, 11: Invoke the division operation using the mk_comp_s6 module. Otherwise, directly passes through the input value without division.
 2. Interface Methods:
    * The module implements the methods specified in the Ifc_comp_s6 interface
-   * method Action get(Bit#(2) op, Float v, Float x, Float z): Takes an opcode and three floating-point numbers (v, x, and z) .
-   * method Float comp_result: Returns the result of the division operation.
+   * method Action put(Bit#(2) op, Float x1, Maybe#(Float) div_res): Takes an opcode and three floating-point numbers (v, x, and z) .
+   * method Maybe#(Float) comp_result: Returns the result of the comparison operation.
 3. Registers and Data Flow:
-   * Registers (input_x, div_Res, sub_Res, comp_res) manage the flow of data between different stages.
-   * input_valid_comp: Flag indicating whether a valid input for computation is present.
+   * Registers (comp_res) manage the flow of data between different stages.
    * λ, and α are constant values stored in registers.
 4. Rules:
-   * LReLu(x) or SeLu(x): Undergoes division operation.
-   * tanh(x), sigmoid(x): Leaves the input value unchanged (div_res <= input_x);
+   * LReLu(x) or SeLu(x): Undergoes comparison operation.
+   * tanh(x), sigmoid(x): Leaves the input value unchanged and the result is taken as div_res.
 ### Overall Latency and Optimisation
 
 ### Test cases & Results 
