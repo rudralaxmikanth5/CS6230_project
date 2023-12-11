@@ -35,7 +35,7 @@ The figure shown below is the overall pipelined module.
 >
 ![Pipline Stages ](Git_Images/pipeline.png)
 >
-*x* represents the given input. Here OP represents the function (which is also given as an input along with x), which enables the pipeline stages based on the function used. *Res_exp*, *Res_add*, *Res_sub*, *Res_div* are the results of the exponential, addition, subtraction and division stages respectively.
+*x* represents the given input. Here OP represents the function (which is also given as an input along with x), which enables the pipeline stages based on the function used. 
    * 00: tanh(x)
    * 01: sigmoid(x)
    * 10: LReLu(x)
@@ -61,18 +61,17 @@ Factorization is performed based on the rules and opcode:
    * The opcode is a 2-bit value that determines the type of factorization operation to be performed.
 2. Interface Methods:
    * The module implements the methods specified in the Ifc_factor_s1 interface
-   *  method Action get(Bit#(2) op, Float x): Initiates the factorization process by providing an opcode (op) and a floating-point number (x).
-   * method Float factor_result: Retrieves the result of the factorization.
-   * method Action pass_in(Float x): Passes an input value into the module.
-   * method Float pass_out: Gets the input value stored in the module.
+   *  method Action put(Bit#(2) op, Maybe#(Float) x): Initiates the factorization process by providing an opcode (op) and a floating-point number (x).
+   * method Maybe#(Float) factor_result: Retrieves the result of the factorization.
+   * method Bit#(2) copy_op: Is used to pass the opcode to the next stage.
 3. Registers and Data Flow:
-   * The module uses registers (input_x, factor_res, in, opcode, input_valid_factor) to manage the data flow and store intermediate results.
-   * The input_valid_factor flag indicates whether valid input is present.
-4. Rules:
-   * The module defines three rules, each corresponding to a different factorization operation based on the opcode:
-   * tanh(x): Doubles the input value (factor_res <= 2 * input_x)
-   * sigmoid(x): Negates the input value (factor_res <= -1 * input_x)
-   * LReLu(x) or SeLu(x): Leaves the input value unchanged (factor_res <= 1 * input_x).
+   * The module uses registers (input_x, factor_res, opcode) to manage the data flow and store intermediate results.
+   * The Maybe# type is used to check the validity of a result.
+4. Method:
+   * The method defines various conditions, each corresponding to a different factorization operation based on the opcode:
+   * tanh(x): Doubles the input value (factor_res <= 2 * input_x) if op = 2'b00
+   * sigmoid(x): Negates the input value (factor_res <= -1 * input_x) if op = 2'b01
+   * LReLu(x) or SeLu(x): Leaves the input value unchanged (factor_res <= 1 * input_x) if op = 2'b10 or 2'b11
 >
 ### STAGE 2 - Exp
 1. opcode :
