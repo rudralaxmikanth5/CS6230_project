@@ -162,80 +162,74 @@ Factorization is performed based on the rules and opcode:
  #### Test case 3 - LReLu(x)
 ```
 module mkTb();
-    Reg#(int) cycle <- mkReg(0);
+    Reg#(int) status <- mkReg(0);
     Ifc_main ifc_main <- mk_main;
 
     rule stage;
-        cycle <= cycle + 1;
+        status <= status + 1;
     endrule 
-    rule input1 (cycle = 0);
-        ifc_main.get(2'b10, -5.3);
-    endrule
-    rule input2 (cycle == 1);
-        ifc_main.get(2'b10, 3.7);
-    endrule
-    rule input3 (cycle == 2);
-        ifc_main.get(2'b10, 11.2);
-    endrule
-    rule input4 (cycle == 3);
-        ifc_main.get(2'b10, 0.2);
-    endrule
-    rule input5 (cycle == 4);
-        ifc_main.get(2'b10, 0);
-    endrule
 
+    rule get_input1(status == 0);
+        ifc_main.put(2'b00, 12.5);
+    endrule
+    rule get_input2(status == 1);
+        ifc_main.put(2'b11, 2.5);
+    endrule
+    rule get_input3(status == 2);
+        ifc_main.put(2'b01, 0);
+    endrule
+    rule get_input4(status == 3);
+        ifc_main.put(2'b10, -2.8);	
     rule result;
-        let r = ifc_main.main_result;
-        $display("Result = %b : cycle =%d", r, cycle;
+         let r = ifc_main.main_result;
+         if (isValid(r))
+         $display($time, " Result = %b : cycle = %d", r.Valid , status );
     endrule
 
-  rule finish(cycle == 30);
+    rule finish(status == 22);
         $finish(0);
-  endrule
+    endrule
 endmodule: mkTb
 
 ```
 Result : 
 ```
-Result = 11000001000011011001110110110001 : cycle =          8
-Result = 01000000011011001100110011001100 : cycle =          9
-Result = 01000001001100110011001100110011 : cycle =         10
-Result = 00111110010011001100110011001100 : cycle =         11
-Result = 00000000000000000000000000000000 : cycle =         12
+                 195 Result = 00111111100000000000000000000000 : cycle =          19
+                 205 Result = 01000000001010000000000000000000 : cycle =          20
+                 215 Result = 00000000000000000000000000000000 : cycle =          21
+                 225 Result = 11000000100101011010000111001010 : cycle =          22
 
 ```
 
  #### Test case 4 - SeLu(x)
  ```
 module mkTb();
-    Reg#(int) cycle <- mkReg(0);
+    Reg#(int) status <- mkReg(0);
     Ifc_main ifc_main <- mk_main;
 
     rule stage;
-        cycle <= cycle + 1;
+        status <= status + 1;
     endrule 
-    rule get_input1(cycle == 0);
-         ifc_main.get(2'b11, 12.5);
+
+    rule get_input1(status == 0);
+        ifc_main.put(2'b00, 2.5);
     endrule
-    rule get_input2(cycle == 1);
-         ifc_main.get(2'b11, 2.8);
+    rule get_input2(status == 1);
+        ifc_main.put(2'b11, -0.5);
     endrule
-    rule get_input3(cycle == 2);
-	 ifc_main.get(2'b11, 0);
+    rule get_input3(status == 2);
+	ifc_main.put(2'b01, 8);
     endrule
-    rule get_input4(cycle == 3);
-	 ifc_main.get(2'b11, 0.1);
-    endrule
-    rule get_input5(cycle == 4);
-	  ifc_main.get(2'b11, 9.9);
-    endrule
-	
+    rule get_input4(status == 3);
+	ifc_main.put(2'b10, -2.8);
+    endrule	
     rule result;
-	 let r = ifc_main.main_result;
-	 $display("Result = %b : cycle =%d", r, cycle);
+	let r = ifc_main.main_result;
+	if (isValid(r))
+	$display($time, " Result = %b : cycle = %d", r.Valid , status );
     endrule
 
-    rule finish(cycle == 30);
+    rule finish(status == 22);
         $finish(0);
     endrule
 endmodule: mkTb
@@ -243,16 +237,185 @@ endmodule: mkTb
  ```
 Result:
 ```
-Result = 01000001010100011111111111111111 : cycle =          8
-Result = 01000000001111000010100011110101 : cycle =          9
-Result = 00000000000000000000000000000000 : cycle =         10
-Result = 00111101110101110000101000111100 : cycle =         11
-Result = 01000001001001100101000111101011 : cycle =         12
+                 195 Result = 00111111011111001001001001001011 : cycle =          19
+                 205 Result = 10111111001100000100110100001100 : cycle =          20
+                 215 Result = 10111111011111111101010000011100 : cycle =          21
+                 225 Result = 11000000100101011010000111001010 : cycle =          22
 ```
 
 ### Synthesis 
 
+=== mk_comp_s6 ===
+
+   Number of wires:               3806
+   Number of wire bits:           7281
+   Number of public wires:         145
+   Number of public wire bits:    3057
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               4831
+     FDRE                          131
+     LUT1                          100
+     LUT2                         1058
+     LUT3                          461
+     LUT4                          180
+     LUT5                          207
+     LUT6                         1406
+     MUXCY                         447
+     MUXF7                         378
+     MUXF8                          76
+     XORCY                         387
+
+   Estimated number of LCs:       2463
+
+=== mk_main ===
+
+   Number of wires:                109
+   Number of wire bits:           1358
+   Number of public wires:          99
+   Number of public wire bits:    1316
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                 88
+     FDRE                           41
+     LUT2                           42
+     mk_comp_s6                      1
+     mkadd_s3                        1
+     mkdiv_s5                        1
+     mkfactor_s1                     1
+     mksub_s4                        1
+
+   Estimated number of LCs:         21
+
+=== mkadd_s3 ===
+
+   Number of wires:               1376
+   Number of wire bits:           3044
+   Number of public wires:          90
+   Number of public wire bits:    1316
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               2140
+     FDRE                          262
+     LUT1                           55
+     LUT2                          410
+     LUT3                          132
+     LUT4                           51
+     LUT5                          101
+     LUT6                          545
+     MUXCY                         176
+     MUXF7                         181
+     MUXF8                          76
+     XORCY                         151
+
+   Estimated number of LCs:        943
+
+=== mkdiv_s5 ===
+
+   Number of wires:              51491
+   Number of wire bits:          71721
+   Number of public wires:          92
+   Number of public wire bits:    1505
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:              67327
+     FDRE                          261
+     LUT1                         4287
+     LUT2                         3760
+     LUT3                         2996
+     LUT4                          519
+     LUT5                          626
+     LUT6                        19695
+     MUXCY                       15577
+     MUXF7                        9279
+     MUXF8                        4018
+     XORCY                        6309
+
+   Estimated number of LCs:      25789
+
+=== mkfactor_s1 ===
+
+   Number of wires:               1989
+   Number of wire bits:           3908
+   Number of public wires:          83
+   Number of public wire bits:    1656
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               2625
+     FDRE                           99
+     LUT1                          101
+     LUT2                          385
+     LUT3                          133
+     LUT4                           95
+     LUT5                          132
+     LUT6                          871
+     MUXCY                         260
+     MUXF7                         278
+     MUXF8                          69
+     XORCY                         202
+
+   Estimated number of LCs:       1310
+
+=== mksub_s4 ===
+
+   Number of wires:               1242
+   Number of wire bits:           2926
+   Number of public wires:          89
+   Number of public wire bits:    1331
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               2000
+     FDRE                          263
+     LUT1                           47
+     LUT2                          419
+     LUT3                          115
+     LUT4                           51
+     LUT5                           70
+     LUT6                          507
+     MUXCY                         176
+     MUXF7                         154
+     MUXF8                          47
+     XORCY                         151
+
+   Estimated number of LCs:        870
+
+=== design hierarchy ===
+
+   mk_main                           1
+     mk_comp_s6                      1
+     mkadd_s3                        1
+     mkdiv_s5                        1
+     mkfactor_s1                     1
+     mksub_s4                        1
+
+   Number of public wire bits:   10181
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:              79006
+     FDRE                         1057
+     LUT1                         4590
+     LUT2                         6074
+     LUT3                         3837
+     LUT4                          896
+     LUT5                         1136
+     LUT6                        23024
+     MUXCY                       16636
+     MUXF7                       10270
+     MUXF8                        4286
+     XORCY                        7200
+
+   Estimated number of LCs:      31291
+
 ### To Run 
 Use the command *make* 
 
+### Result 
+Hence the module is pipelined and well-optimised with 6 stages
 
