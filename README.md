@@ -104,8 +104,9 @@ Factorization is performed based on the rules and opcode:
    * method Float copy_x: Returns the value of factor_res to pass to the next stage.
    * method Bit#(2) copy_op:  This is used to pass the opcode to the next stage.
 3. Registers and Data Flow:
-   * Registers op1, op2,..op4, x1,x2,..x4 are used.
-   * Reg#(Bool) type registers are used to check the validity of the stages.
+3. Registers and Data Flow:
+   * Registers (op1, op2,..op4, x1,x2,..x4) are used to manage the flow of data between different stages.
+   * Reg#(Bool) type add1_valid,..,add4_valid: Flags indicating the validity of the stages of addition operation.
 4. Rules:
    * tanh(x), sigmoid(x): Undergoes addition operation (op = 2'b00, 2'b01)
    * LReLu(x) or SeLu(x): Leaves the input value unchanged (op = 2'b10, 2'b11);
@@ -115,17 +116,17 @@ Factorization is performed based on the rules and opcode:
    * 00, 11: Invoke the subtraction operation using the mk_sub module. Otherwise, directly passes through the input value without subtraction.
 2. Interface Methods:
    * The module implements the methods specified in the Ifc_sub_s4 interface
-   * method Action get(Bit#(2) op, Float x): Takes an opcode (op) and a floating-point value (x) as input and sets the input_x and opcode register accordingly.
-   * method Float sub_result: Returns the result of the subtraction operation.
-   * method Action pass_in(Float x, Float exp_r): Takes two floating-point values (x and exp_r) as input and sets the in and exp_pass registers accordingly.
-   * method Float pass_out: Returns the value stored in the register.
-   * method Float add_res_out: Returns the additional value passed through the pipeline.
+   * method Action put(Bit#(2) op, Float copy_x, Maybe#(Float) add_res): Takes an opcode (op), factor_res and add_res as input and sets the input and opcode register accordingly.
+   * method ActionValue#(Maybe#(Float)) sub_result: Returns the result of the subtraction operation.
+   * method Float copy_x: Returns the value of factor_res to pass to the next stage.
+   * method Bit#(2) copy_op: This is used to pass the opcode to the next stage.
 3. Registers and Data Flow:
-   * Registers (input_x, sub_res, add_pass) manage the flow of data between different stages.
-   * sub1_valid to sub4_valid: Flags indicating the stages of the subtraction operation.
+   * Registers (op1, op2,..op4, x1,x2,..x4) are used to manage the flow of data between different stages.
+   * Reg#(Bool) type sub1_valid,..,sub4_valid: Flags indicating the validity of the stages of subtraction operation.
 4. Rules:
-   * tanh(x), SeLu(x): Undergoes subtraction operation
-   * sigmoid(x) or LReLu(x): Leaves the input value unchanged (add_res <= input_x);
+   * If op = 2'b00 or 2'b01, then add_res is used. If op = 2'b10 or 2'b11, then factor_res is used.
+   * tanh(x), SeLu(x): Undergoes subtraction operation.
+   * sigmoid(x) or LReLu(x): Leaves the input value unchanged.
 
 ### STAGE 5 - Div
 1. opcode :
