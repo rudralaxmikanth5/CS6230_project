@@ -3,79 +3,37 @@ import ConfigReg         ::*;
 typedef FloatingPoint#(8,23) Float;
 
 interface Ifc_comp_s6;
-    method Action get(Bit#(2) op, Float v,Float x, Float z);
-    method Float comp_result; 
+    method Action put(Bit#(2) op, Float x1, Maybe#(Float) div_res);
+    method Maybe#(Float) comp_result; 
 endinterface
 
 module mk_comp_s6(Ifc_comp_s6);
-    Reg#(Float) input_x <- mkReg(0);
-    Reg#(Float) sub_Res <- mkReg(0);
-    Reg#(Float) div_Res <- mkReg(0);
-    Reg#(Float) comp_res <- mkReg(0);
-    Reg#(Float) y <- mkReg(0);
+    Reg#(Maybe#(Float)) comp_res <- mkReg(tagged Invalid);
 
-    Reg#(Float) alpha <- mkReg(1.67);
-    Reg#(Float) lambda <- mkReg(1.05);
-    Reg#(Float) alpha_lambda <- mkReg(1.75);
+    Float alpha = 1.67;
+    Float lambda = 1.05;
+    Float alpha_lambda = 1.75;
 
-    Reg#(Bit#(2)) opcode <- mkReg(0);
+	Reg#(Maybe#(Float)) temp_cres <- mkDWire(tagged Invalid);
 
-    Reg#(Bool) input_valid_comp <- mkReg(False);
+	rule pass_value;
+		comp_res <= temp_cres;
+	endrule
 
-    rule tanh_or_sigmoid (((opcode == 2'b00) || (opcode == 2'b01)) && input_valid_comp); 
-        comp_res <= div_Res;
-    endrule 
+	method Action put(Bit#(2) op, Float x1, Maybe#(Float) div_res);
+		Float temp_res=0;
+		if (isValid(div_res)) begin
+			if (op[1] == 0)	temp_res = div_res.Valid;
+			else if (x1.sign == True) begin 
+				if (op == 2'b10) temp_res = alpha * x1; //alpha*factorx
+				else temp_res = alpha_lambda * div_res.Valid; //alpha*lambda
+			end	else begin 
+				if (op == 2'b10) temp_res = x1; //factorx
+				else temp_res = lambda * x1;
+			end	
+			temp_cres <= tagged Valid(temp_res);
+		end
+	endmethod
 
-    rule lrelu ((opcode == 2'b10) && input_valid_comp);
-        if (input_x.sign == False) begin 
-            comp_res <= input_x;
-        end
-        if (input_x.sign == True) begin
-            comp_res <= alpha*input_x;
-        end
-    endrule
-    rule selu ((opcode == 2'b11) && input_valid_comp);
-        if (input_x.sign == False) begin
-            comp_res <= lambda*input_x;
-        end
-        if (input_x.sign == True) begin 
-            comp_res <= alpha_lambda*sub_Res;
-        end
-    endrule 
-    method Action get(Bit#(2) op,Float v,Float x, Float z);
-        input_x <= v;
-        sub_Res <= x;
-        div_Res <= z;
-        opcode <= op;
-        input_valid_comp <= True;
-    endmethod
-
-    method Float comp_result;
-        return comp_res ;
-    endmethod
+    method Maybe#(Float) comp_result = comp_res; 
 endmodule 
-
-(*synthesize*)
-module mkTb();
-    Reg#(int) cycle <- mkReg(0);
-
-    Ifc_comp_s6 fp_comp <- mk_comp_s6;
-    rule stages;
-        cycle <= cycle + 1;
-    endrule
-    rule get1 (cycle == 0);
-       fp_comp.get(2'b11, -1, 2, 3);
-    endrule
-
-    // rule get2 (cycle == 1);
-    //    fp_comp.get(2'b00, 5, 2.2, 1.2);
-    // endrule
-
-    rule res;
-        let r = fp_comp.comp_result;
-        $display("Result = %b : cycle = %d", r, cycle);
-    endrule 
-    rule done(cycle == 3);
-        $finish(0);
-    endrule 
-endmodule:mkTb

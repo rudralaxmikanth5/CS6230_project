@@ -530,94 +530,68 @@ module mk_fpu_add_sub_sp_instance(Ifc_add#(8,23,`STAGES_FADD_SP));
 endmodule
 
 interface Ifc_add_s3;
-    method Action get(Bit#(2) op, Float x);
-    method Float add_result; 
-    method Action pass_in(Float x, Float exp_r);
-    method Float pass_out; 
-    method Float exp_res_out;
+    method Action put(Bit#(2) op, Float copy_xin, Maybe#(Float) x);
+    method ActionValue#(Maybe#(Float)) add_result; 
+    method Float copy_x; 
+	method Bit#(2) copy_op;
 endinterface
 
+// (*synthesize*)
 module mkadd_s3(Ifc_add_s3); 
-    Reg#(Float) input_x <- mkReg(0); 
-    Reg#(Float) add_res <- mkReg(0);
-    Reg#(Float) in <- mkReg(0);
-    Reg#(Bit#(2)) opcode <- mkReg(0);
-    Reg#(Bool) input_valid_add <- mkReg(False);
+	Reg#(Maybe#(Float)) inp1 <- mkReg(tagged Invalid), inp2 <- mkReg(tagged Invalid), inp3 <- mkReg(tagged Invalid), inp4 <- mkReg(tagged Invalid);
+
+	Reg#(Bit#(2)) op1 <- mkReg(0), op2 <- mkReg(0), op3 <- mkReg(0), op4 <- mkReg(0);
+
+	Reg#(Float) x1 <- mkReg(0), x2 <- mkReg(0), x3 <- mkReg(0), x4 <- mkReg(0);
 
     Reg#(Bool) add1_valid <- mkReg(False);
     Reg#(Bool) add2_valid <- mkReg(False);
     Reg#(Bool) add3_valid <- mkReg(False);
     Reg#(Bool) add4_valid <- mkReg(False);
 
-    Ifc_add#(8,23,4) ifc_add <- mk_add;
+    Ifc_add#(8,23,4) add <- mk_add;
 
-    rule add_1 (((opcode == 2'b00) || (opcode == 2'b01))&& (input_valid_add));
-        RoundMode op4 = Rnd_Nearest_Even;
-        ifc_add.send(tuple3(input_x,1,op4));
-        add1_valid <= True;
+	Reg#(Maybe#(Float)) temp_inp1 <- mkDWire(tagged Invalid);
+
+    rule add2;
+		op2 <= op1;
+		inp2 <= inp1;
+		x2 <= x1;
     endrule 
-    rule add1 (add1_valid);
-	    add2_valid <= True;
-    endrule 
-    rule add2 (add2_valid);
-	    add3_valid <= True;
-    endrule
-    rule add3 (add3_valid);
-	    add4_valid <= True;
+
+    rule add3;
+		op3 <= op2;
+		inp3 <= inp2;
+		x3 <= x2;
     endrule
 
-    rule add_1_res (((opcode == 2'b00) || (opcode == 2'b01)) && input_valid_add && add4_valid );
-        let r = ifc_add.receive();
-        add_res <= r.value;
+    rule add4;
+		op4 <= op3;
+	    inp4 <= inp3;
+		x4 <= x3;
     endrule
 
-    rule add2_res (((opcode == 2'b10)||(opcode == 2'b11)) && input_valid_add );
-        add_res <= input_x;
-    endrule
+	rule pass_inp;
+		inp1 <= temp_inp1;
+	endrule
 
-    method Action get(Bit#(2) op, Float x);
-       input_x <= x;
-       opcode <= op;
-       input_valid_add <= True;
-    endmethod
+	method Action put(Bit#(2) op, Float copy_xin, Maybe#(Float) x);
+		op1 <= op;
+		temp_inp1 <= x;
+		x1 <= copy_xin;
+		RoundMode rm = Rnd_Nearest_Even;
+        add.send(tuple3(x.Valid, 1 , rm));
+	endmethod 
+	
+	method ActionValue#(Maybe#(Float)) add_result; 
+		let r = add.receive;
+		if (isValid(inp4))
+			return tagged Valid(r.value);
+		else
+			return tagged Invalid;
+	endmethod 
 
-    method Float add_result; 
-       return add_res;
-    endmethod 
+    method Float copy_x = x4;
+	method Bit#(2) copy_op = op4;
+endmodule
 
-    method Action pass_in(Float x, Float exp_r);
-       in <= x;
-       exp_pass <= exp_r;
-    endmethod 
-    method Float pass_out;
-       return in;
-    endmethod
-    method Float exp_res_out;
-       return exp_pass;
-    endmethod
-endmodule 
-
-(*synthesize*)
-module mkTb();   
-    Reg#(int) cycle <- mkReg(0);
-
-    Ifc_add_s3 fp_add <- mkadd_s3;
-    rule stages;
-        cycle <= cycle + 1;
-    endrule
-    rule get1 (cycle == 0);
-       fp_add.get(2'b10, 2);
-    endrule
-
-    rule get2 (cycle == 1);
-       fp_add.get(2'b00, 1.2);
-    endrule
-
-    rule res;
-        let add_r = fp_add.add_result;
-        $display("Result = %b : cycle = %d", add_r, cycle);
-    endrule 
-    rule done(cycle == 15);
-        $finish(0);
-    endrule 
-endmodule:mkTb 
