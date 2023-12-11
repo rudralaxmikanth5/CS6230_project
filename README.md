@@ -247,171 +247,32 @@ Result:
 
 === mk_comp_s6 ===
 
-   Number of wires:               3806
-   Number of wire bits:           7281
-   Number of public wires:         145
-   Number of public wire bits:    3057
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
    Number of cells:               4831
-     FDRE                          131
-     LUT1                          100
-     LUT2                         1058
-     LUT3                          461
-     LUT4                          180
-     LUT5                          207
-     LUT6                         1406
-     MUXCY                         447
-     MUXF7                         378
-     MUXF8                          76
-     XORCY                         387
-
-   Estimated number of LCs:       2463
 
 === mk_main ===
 
-   Number of wires:                109
-   Number of wire bits:           1358
-   Number of public wires:          99
-   Number of public wire bits:    1316
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
    Number of cells:                 88
-     FDRE                           41
-     LUT2                           42
-     mk_comp_s6                      1
-     mkadd_s3                        1
-     mkdiv_s5                        1
-     mkfactor_s1                     1
-     mksub_s4                        1
-
-   Estimated number of LCs:         21
 
 === mkadd_s3 ===
 
-   Number of wires:               1376
-   Number of wire bits:           3044
-   Number of public wires:          90
-   Number of public wire bits:    1316
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
    Number of cells:               2140
-     FDRE                          262
-     LUT1                           55
-     LUT2                          410
-     LUT3                          132
-     LUT4                           51
-     LUT5                          101
-     LUT6                          545
-     MUXCY                         176
-     MUXF7                         181
-     MUXF8                          76
-     XORCY                         151
-
-   Estimated number of LCs:        943
 
 === mkdiv_s5 ===
 
-   Number of wires:              51491
-   Number of wire bits:          71721
-   Number of public wires:          92
-   Number of public wire bits:    1505
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
    Number of cells:              67327
-     FDRE                          261
-     LUT1                         4287
-     LUT2                         3760
-     LUT3                         2996
-     LUT4                          519
-     LUT5                          626
-     LUT6                        19695
-     MUXCY                       15577
-     MUXF7                        9279
-     MUXF8                        4018
-     XORCY                        6309
-
-   Estimated number of LCs:      25789
 
 === mkfactor_s1 ===
 
-   Number of wires:               1989
-   Number of wire bits:           3908
-   Number of public wires:          83
-   Number of public wire bits:    1656
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
    Number of cells:               2625
-     FDRE                           99
-     LUT1                          101
-     LUT2                          385
-     LUT3                          133
-     LUT4                           95
-     LUT5                          132
-     LUT6                          871
-     MUXCY                         260
-     MUXF7                         278
-     MUXF8                          69
-     XORCY                         202
-
-   Estimated number of LCs:       1310
 
 === mksub_s4 ===
 
-   Number of wires:               1242
-   Number of wire bits:           2926
-   Number of public wires:          89
-   Number of public wire bits:    1331
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
    Number of cells:               2000
-     FDRE                          263
-     LUT1                           47
-     LUT2                          419
-     LUT3                          115
-     LUT4                           51
-     LUT5                           70
-     LUT6                          507
-     MUXCY                         176
-     MUXF7                         154
-     MUXF8                          47
-     XORCY                         151
-
-   Estimated number of LCs:        870
 
 === design hierarchy ===
 
-   mk_main                           1
-     mk_comp_s6                      1
-     mkadd_s3                        1
-     mkdiv_s5                        1
-     mkfactor_s1                     1
-     mksub_s4                        1
-
-   Number of public wire bits:   10181
-   Number of memories:               0
-   Number of memory bits:            0
-   Number of processes:              0
    Number of cells:              79006
-     FDRE                         1057
-     LUT1                         4590
-     LUT2                         6074
-     LUT3                         3837
-     LUT4                          896
-     LUT5                         1136
-     LUT6                        23024
-     MUXCY                       16636
-     MUXF7                       10270
-     MUXF8                        4286
-     XORCY                        7200
-
-   Estimated number of LCs:      31291
+   
 
 ### To Run 
 Use the command *make* 
